@@ -5,6 +5,7 @@ use crate::environment::Environment;
 use rand::Rng;
 use mysql::prelude::Queryable;
 use mysql::{Row, Params, params};
+use actix_web::cookie::Cookie;
 
 pub async fn get_authorization(data: web::Data<AppData>, req: HttpRequest) -> HttpResponse {
     let qstring = QString::from(req.query_string());
@@ -36,7 +37,7 @@ pub async fn get_authorization(data: web::Data<AppData>, req: HttpRequest) -> Ht
     }
 
     let user_locale_param = qstring.get("locale");
-    if user_locale.is_none() {
+    if user_locale_param.is_none() {
         return HttpResponse::BadRequest().body("Missing parameter 'locale'");
     }
 
@@ -47,7 +48,7 @@ pub async fn get_authorization(data: web::Data<AppData>, req: HttpRequest) -> Ht
 
     let authorization_code: String = rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(64).map(char::from).collect();
 
-    if !(redirect_uri_param.unwrap().contains(" https://oauth-redirect.googleusercontent.com/r/") || redirect_uri_param.contains("https://oauth-redirect-sandbox.googleusercontent.com/r/")) {
+    if !(redirect_uri_param.unwrap().contains(" https://oauth-redirect.googleusercontent.com/r/") || redirect_uri_param.unwrap().contains("https://oauth-redirect-sandbox.googleusercontent.com/r/")) {
         return HttpResponse::BadRequest().body("Value of parameter 'redirect_uri' is invalid.");
     }
 
@@ -55,8 +56,10 @@ pub async fn get_authorization(data: web::Data<AppData>, req: HttpRequest) -> Ht
     let mut user_id: Option<String>;
 
     //Get the session_id cookie, if it is set
-    let session_cookie: Option<String> = req.cookie("session_id");
+    let session_cookie: Option<Cookie> = req.cookie("session_id");
     if session_cookie.is_some() {
+        let cookie = session_cookie.unwrap().value().to_string();
+
         let conn = data.database.pool.get_conn();
         if conn.is_err() {
             return HttpResponse::InternalServerError().body("Something went wrong. Please try again later!");
@@ -65,7 +68,7 @@ pub async fn get_authorization(data: web::Data<AppData>, req: HttpRequest) -> Ht
 
         let mut conn_unwrapped = conn.unwrap();
         let query_result = conn_unwrapped.exec::<Row, &str, Params>("SELECT session_id,user_id FROM sessions WHERE session_id = :session_id", params! {
-            "session_id" => session_cookie.unwrap()
+            "session_id" => cookie
         });
 
         if query_result.is_err() {
@@ -93,6 +96,4 @@ pub async fn get_authorization(data: web::Data<AppData>, req: HttpRequest) -> Ht
 
 
     return HttpResponse::Ok().finish();
-
-
 }

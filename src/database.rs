@@ -1,7 +1,7 @@
 use mysql::Pool;
 use crate::environment::Environment;
 
-#[derive(clone)]
+#[derive(Clone)]
 pub struct Database {
     pub pool: Pool
 }
