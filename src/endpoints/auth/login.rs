@@ -70,6 +70,7 @@ pub async fn post_login(data: web::Data<AppData>, req: HttpRequest) -> HttpRespo
     //Create a connection to the database
     let conn_wrapped = data.database.pool.get_conn();
     if conn_wrapped.is_err() {
+        eprintln!("Unable to unwrap Database connection: {:?}", conn_wrapped.err());
         return HttpResponse::InternalServerError().finish();
     }
     let mut conn = conn_wrapped.unwrap();
@@ -81,38 +82,37 @@ pub async fn post_login(data: web::Data<AppData>, req: HttpRequest) -> HttpRespo
 
     //Check if the fetch succeeded
     if sql_fetch_result.is_err() {
+        eprintln!("Unable to execute a SQL Fetch query: {:?}", sql_fetch_result.err());
         return HttpResponse::InternalServerError().finish();
     }
 
-    //Iterate over the returned rows
-    //Take the first row and get the password and salt
-    let mut password_from_db: Option<String> = None;
-    let mut salt_from_db: Option<String> = None;
-    for row in sql_fetch_result.unwrap() {
-        //Get the password, and check that it is not None
-        let password = row.get::<String, &str>("password");
-        if password.is_none() {
-            return HttpResponse::InternalServerError().finish();
-        }
-
-        //Get the salt, and check that it is not None
-        let salt = row.get::<String, &str>("salt");
-        if salt.is_none() {
-            return HttpResponse::InternalServerError().finish();
-        }
-
-        password_from_db = Some(password.unwrap());
-        salt_from_db = Some(salt.unwrap());
-
-        //Only doing 1 iteration
-        break;
+    //Check if we got any results at all
+    let sql_fetch_result_unwrapped = sql_fetch_result.unwrap();
+    let row_count = sql_fetch_result_unwrapped.len();
+    if row_count == 0 {
+        //We got no results, this means the user account does not exist. We return a 401 status for security reasons.
+        //If we'd return a 404 an attacker could figure out what emails are valid
+        let login_response = LoginResponse::new(401, Some("E-mail address and password combination is invalid, or the account does not exist.".to_string()), None);
+        return HttpResponse::Ok().json(login_response);
     }
 
+    //Check if we got more than 1 result, this should never happen!
+    if row_count > 1 {
+        eprintln!("Database returned more than 1 row from the database. This should never happen! (login.rs)");
+        return HttpResponse::InternalServerError().finish();
+    }
+
+    //Get the password and salt columns from the first row
+    let row = sql_fetch_result_unwrapped.get(0).unwrap();
+    let password_from_db = row.get::<String, &str>("password");
+    let salt_from_db = row.get::<String, &str>("salt");
+
     //Check if the password or the salt from the database are None
-    //If this is the case the user does not have an account
+    //If this is the case, something went horribly wrong
     if password_from_db.is_none() || salt_from_db.is_none() {
-        let login_response = LoginResponse::new(404, Some("No user exists with that E-mail address".to_string()), None);
-        return HttpResponse::Ok().json(login_response);
+        //We got a result, but the password or salt are empty, This is an error.
+        eprintln!("Received a result from the Database, but the password or the salt are empty (login.rs)");
+        return HttpResponse::InternalServerError().finish();
     }
 
     //Create a Sha512 hasher instance
@@ -130,13 +130,14 @@ pub async fn post_login(data: web::Data<AppData>, req: HttpRequest) -> HttpRespo
     //Cost of 10 is a nice balance between strength and computation time
     let password_bcrypt = bcrypt::hash(&password_hashed, 10);
     if password_bcrypt.is_err() {
+        eprintln!("An error occurred while bcrypt-ing the password hash: {:?}", password_bcrypt.err());
         return HttpResponse::InternalServerError().finish();
     }
 
     //Check if the password provided by client and the password in the database match
     if password_bcrypt.unwrap() != password_from_db.unwrap() {
         //Passwords do not match.
-        let login_response = LoginResponse::new(401, Some("E-mail address and password combination is invalid".to_string()), None);
+        let login_response = LoginResponse::new(401, Some("E-mail address and password combination is invalid, or the account does not exist.".to_string()), None);
         return HttpResponse::Ok().json(login_response);
     }
 
@@ -152,6 +153,7 @@ pub async fn post_login(data: web::Data<AppData>, req: HttpRequest) -> HttpRespo
     //This is important, otherwise the user will end up in
     //an infinite login loop
     if session_id_write_response.is_err() {
+        eprintln!("An error occurred while writing the session_id to the Database: {:?}", session_id_write_response.err());
         return HttpResponse::InternalServerError().finish();
     }
 

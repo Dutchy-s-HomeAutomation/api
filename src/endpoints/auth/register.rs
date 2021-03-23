@@ -70,10 +70,10 @@ pub async fn post_register(data: web::Data<AppData>, req: HttpRequest) -> HttpRe
     //Create a connection to the database
     let conn_wrapped = data.database.pool.get_conn();
     if conn_wrapped.is_err() {
+        eprintln!("An error occurred while creating a connection to the Database: {:?}", conn_wrapped.err());
         return HttpResponse::InternalServerError().finish();
     }
     let mut conn = conn_wrapped.unwrap();
-
 
     //Check if the user is already registered with
     let sql_fetch_result = conn.exec::<Row, &str, Params>("SELECT 1 FROM users WHERE email = :email", params! {
@@ -81,6 +81,7 @@ pub async fn post_register(data: web::Data<AppData>, req: HttpRequest) -> HttpRe
     });
 
     if sql_fetch_result.is_err() {
+        eprintln!("An error occurred while fetching rows from the Database: {:?}", sql_fetch_result.err());
         return HttpResponse::InternalServerError().finish();
     }
 
@@ -111,6 +112,7 @@ pub async fn post_register(data: web::Data<AppData>, req: HttpRequest) -> HttpRe
     //Cost of 10 is a nice balance between strength and computation time
     let password_bcrypt = bcrypt::hash(&password_hashed, 10);
     if password_bcrypt.is_err() {
+        eprintln!("An error occurred while bcrypt-ing the hashed password: {:?}", password_bcrypt.err());
         return HttpResponse::InternalServerError().finish();
     }
 
@@ -118,7 +120,7 @@ pub async fn post_register(data: web::Data<AppData>, req: HttpRequest) -> HttpRe
     let session_id: String = rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(64).map(char::from).collect();
     let user_id: String = rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(64).map(char::from).collect();
 
-    //Write the user id, email, password, salt and session id to the database
+    //Write the user id, email, hashed and bcrypt-ed password, salt and session id to the database
     let sql_write_response = conn.exec::<usize, &str, Params>("INSERT INTO users (user_id, email, password, salt, session_id) SET (:user_id, :email, :password, :salt, :session_id", params! {
         "user_id" => user_id,
         "email" => email,
@@ -129,6 +131,7 @@ pub async fn post_register(data: web::Data<AppData>, req: HttpRequest) -> HttpRe
 
     //Check if the insert operation succeeded
     if sql_write_response.is_err() {
+        eprintln!("An error occurred while inserting a new account into the Database: {:?}", sql_write_response.err());
         return HttpResponse::InternalServerError().finish();
     }
 
