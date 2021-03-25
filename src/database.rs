@@ -13,7 +13,7 @@ impl Database {
         let mysql_uri = format!("mysql://{username}:{password}@{host}/{database}",
             username = env.mysql_username,
             password = env.mysql_password,
-            host     = env.host,
+            host     = env.mysql_host,
             database = env.mysql_database
         );
 

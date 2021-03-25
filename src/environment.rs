@@ -20,12 +20,6 @@ pub struct Environment {
     /// This should NOT end with a trailing slash
     pub host:                       String,
 
-    /// Consumer key provided by Honeywell
-    pub honeywell_consumer_key:     String,
-
-    /// Consumer secret provided by Honeywell
-    pub honeywell_consumer_secret:  String,
-
     /// Google Client ID provided by Google
     pub google_client_id:           String,
 }
@@ -66,16 +60,6 @@ impl Environment {
             environmental_variable_not_set("HOST");
         }
 
-        let honeywell_consumer_key = env::var("HONEYWELL_CONSUMER_KEY");
-        if honeywell_consumer_key.is_err() {
-            environmental_variable_not_set("HONEYWELL_CONSUMER_KEY");
-        }
-
-        let honeywell_consumer_secret = env::var("HONEYWELL_CONSUMER_SECRET");
-        if honeywell_consumer_secret.is_err() {
-            environmental_variable_not_set("HONEYWELL_CONSUMER_SECRET");
-        }
-
         let google_client_id = env::var("GOOGLE_CLIENT_ID");
         if google_client_id.is_err() {
             environmental_variable_not_set("GOOGLE_CLIENT_ID");
@@ -89,9 +73,6 @@ impl Environment {
             mysql_password:             mysql_password.unwrap(),
 
             host:                       host.unwrap(),
-
-            honeywell_consumer_key:     honeywell_consumer_key.unwrap(),
-            honeywell_consumer_secret:  honeywell_consumer_secret.unwrap(),
 
             google_client_id:           google_client_id.unwrap()
         }

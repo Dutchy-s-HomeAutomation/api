@@ -1,7 +1,14 @@
 pub mod register;
 pub mod login;
+pub mod session;
 
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
+
+#[derive(Deserialize)]
+pub struct LoginForm {
+    pub email:      String,
+    pub password:   String
+}
 
 #[derive(Serialize)]
 pub struct LoginResponse {

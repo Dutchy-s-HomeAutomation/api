@@ -1,12 +1,13 @@
 use crate::appdata::AppData;
 use crate::environment::Environment;
-use crate::endpoints::auth::LoginResponse;
+use crate::endpoints::auth::{LoginResponse, LoginForm};
 
 use actix_web::{web, post, HttpResponse, HttpRequest};
 use mysql::prelude::Queryable;
 use mysql::{Row, Params, params};
 use sha2::{Sha512Trunc256, Digest};
 use rand::Rng;
+use bcrypt::Version;
 
 /**
 Endpoint allowing a user to log in with their Email and Password
@@ -32,31 +33,17 @@ No body should be provided
 | session_id     | Optional String | If the login succeeded, this will hold the session_id                       |
 */
 #[post("/auth/login")]
-pub async fn post_login(data: web::Data<AppData>, req: HttpRequest) -> HttpResponse {
-    let qstring = qstring::QString::from(req.query_string());
-
-    //Get and validate that the 'email' query parameter is given
-    let email_param = qstring.get("email");
-    if email_param.is_none() {
-        return HttpResponse::BadRequest().body("Missing required parameter 'email'");
-    }
-
-    //Get and validate that the 'password' query parameter is given
-    let password_param = qstring.get("password");
-    if password_param.is_none() {
-        return HttpResponse::BadRequest().body("Missing required parameter 'password'");
-    }
-
+pub async fn post_login(data: web::Data<AppData>, req: HttpRequest, form: web::Form<LoginForm>) -> HttpResponse {
     //Decode the Email address from Base64 to a vector of bytes and check if it succeeded
     //This could fail due to the client providing an invalid Base64 String
-    let email_decoded_result = base64::decode(email_param.unwrap().as_bytes());
+    let email_decoded_result = base64::decode(form.email.clone().as_bytes());
     if email_decoded_result.is_err() {
         return HttpResponse::BadRequest().body(email_decoded_result.err().unwrap().to_string());
     }
 
     //Decode the password from Base64 to a vector of bytes and check if it succeeded
     //This could fail due to the client providing an invalid Base64 String
-    let password_decoded_result = base64::decode(password_param.unwrap());
+    let password_decoded_result = base64::decode(form.password.clone().as_bytes());
     if password_decoded_result.is_err() {
         return HttpResponse::BadRequest().body(password_decoded_result.err().unwrap().to_string());
     }
@@ -107,6 +94,8 @@ pub async fn post_login(data: web::Data<AppData>, req: HttpRequest) -> HttpRespo
     let password_from_db = row.get::<String, &str>("password");
     let salt_from_db = row.get::<String, &str>("salt");
 
+    println!("{}", salt_from_db.clone().unwrap().clone());
+
     //Check if the password or the salt from the database are None
     //If this is the case, something went horribly wrong
     if password_from_db.is_none() || salt_from_db.is_none() {
@@ -120,7 +109,7 @@ pub async fn post_login(data: web::Data<AppData>, req: HttpRequest) -> HttpRespo
 
     //Insert the password, salt fetched from the database, and application pepper into the Hasher
     hasher.update(&password);
-    hasher.update(&salt_from_db.unwrap());
+    hasher.update(&salt_from_db.clone().unwrap());
     hasher.update(&env.password_pepper);
 
     //Encode the hashed password as Base64
@@ -128,14 +117,17 @@ pub async fn post_login(data: web::Data<AppData>, req: HttpRequest) -> HttpRespo
 
     //Run the Bcrypt algorithm on the hashed password
     //Cost of 10 is a nice balance between strength and computation time
-    let password_bcrypt = bcrypt::hash(&password_hashed, 10);
+    let password_bcrypt = bcrypt::hash_with_salt(&password_hashed, 10, salt_from_db.clone().unwrap().as_bytes());
     if password_bcrypt.is_err() {
         eprintln!("An error occurred while bcrypt-ing the password hash: {:?}", password_bcrypt.err());
         return HttpResponse::InternalServerError().finish();
     }
 
+    let hash_parts = password_bcrypt.unwrap();
+    let password_final = hash_parts.format_for_version(Version::TwoY);
+
     //Check if the password provided by client and the password in the database match
-    if password_bcrypt.unwrap() != password_from_db.unwrap() {
+    if password_final != password_from_db.unwrap() {
         //Passwords do not match.
         let login_response = LoginResponse::new(401, Some("E-mail address and password combination is invalid, or the account does not exist.".to_string()), None);
         return HttpResponse::Ok().json(login_response);

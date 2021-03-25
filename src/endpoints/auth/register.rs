@@ -1,12 +1,13 @@
 use crate::appdata::AppData;
 use crate::environment::Environment;
-use crate::endpoints::auth::LoginResponse;
+use crate::endpoints::auth::{LoginResponse, LoginForm};
 
 use actix_web::{web, post, HttpResponse, HttpRequest};
 use mysql::prelude::Queryable;
 use mysql::{Row, Params, params};
 use sha2::{Sha512Trunc256, Digest};
 use rand::Rng;
+use bcrypt::Version;
 
 /**
 Endpoint allowing a user to register with their Email and Password
@@ -32,31 +33,18 @@ No body should be provided
 | session_id     | Optional String | If the login succeeded, this will hold the session_id                       |
 */
 #[post("/auth/register")]
-pub async fn post_register(data: web::Data<AppData>, req: HttpRequest) -> HttpResponse {
-    let qstring = qstring::QString::from(req.query_string());
-
-    //Get and validate that the 'email' query parameter is given
-    let email_param = qstring.get("email");
-    if email_param.is_none() {
-        return HttpResponse::BadRequest().body("Missing required parameter 'email'");
-    }
-
-    //Get and validate that the 'password' query parameter is given
-    let password_param = qstring.get("password");
-    if password_param.is_none() {
-        return HttpResponse::BadRequest().body("Missing required parameter 'password'");
-    }
+pub async fn post_register(data: web::Data<AppData>, req: HttpRequest, form: web::Form<LoginForm>) -> HttpResponse {
 
     //Decode the Email address from Base64 to a vector of bytes and check if it succeeded
     //This could fail due to the client providing an invalid Base64 String
-    let email_decoded_result = base64::decode(email_param.unwrap().as_bytes());
+    let email_decoded_result = base64::decode(form.email.clone().as_bytes());
     if email_decoded_result.is_err() {
         return HttpResponse::BadRequest().body(email_decoded_result.err().unwrap().to_string());
     }
 
     //Decode the password from Base64 to a vector of bytes and check if it succeeded
     //This could fail due to the client providing an invalid Base64 String
-    let password_decoded_result = base64::decode(password_param.unwrap().as_bytes());
+    let password_decoded_result = base64::decode(form.password.clone().as_bytes());
     if password_decoded_result.is_err() {
         return HttpResponse::BadRequest().body(password_decoded_result.err().unwrap().to_string());
     }
@@ -94,7 +82,7 @@ pub async fn post_register(data: web::Data<AppData>, req: HttpRequest) -> HttpRe
     }
 
     //Generate a 64 character long salt
-    let salt: String = rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(64).map(char::from).collect();
+    let salt: String = rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(16).map(char::from).collect();
 
     //Create a Sha512 hasher instance
     let mut hasher = Sha512Trunc256::new();
@@ -102,7 +90,7 @@ pub async fn post_register(data: web::Data<AppData>, req: HttpRequest) -> HttpRe
     //Hash the password with sha512 truncated to 256 bits
     //Include the provided password, the generated salt, and the application's pepper
     hasher.update(&password);
-    hasher.update(&salt);
+    hasher.update(&salt.clone());
     hasher.update(&env.password_pepper);
 
     //Encode the hashed password as Base64
@@ -110,22 +98,25 @@ pub async fn post_register(data: web::Data<AppData>, req: HttpRequest) -> HttpRe
 
     //Run the Bcrypt algorithm on the hashed password
     //Cost of 10 is a nice balance between strength and computation time
-    let password_bcrypt = bcrypt::hash(&password_hashed, 10);
+    let password_bcrypt = bcrypt::hash_with_salt(&password_hashed, 10, salt.clone().as_bytes());
     if password_bcrypt.is_err() {
         eprintln!("An error occurred while bcrypt-ing the hashed password: {:?}", password_bcrypt.err());
         return HttpResponse::InternalServerError().finish();
     }
+
+    let hash_parts = password_bcrypt.unwrap();
+    let password_final = hash_parts.format_for_version(Version::TwoY);
 
     //Generate a 64 character long session ID and user ID
     let session_id: String = rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(64).map(char::from).collect();
     let user_id: String = rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(64).map(char::from).collect();
 
     //Write the user id, email, hashed and bcrypt-ed password, salt and session id to the database
-    let sql_write_response = conn.exec::<usize, &str, Params>("INSERT INTO users (user_id, email, password, salt, session_id) SET (:user_id, :email, :password, :salt, :session_id", params! {
+    let sql_write_response = conn.exec::<usize, &str, Params>("INSERT INTO users (user_id, email, password, salt, session_id) VALUES (:user_id, :email, :password, :salt, :session_id)", params! {
         "user_id" => user_id,
         "email" => email,
-        "password" => password_bcrypt.unwrap(),
-        "salt" => salt,
+        "password" => password_final,
+        "salt" => salt.clone(),
         "session_id" => session_id.clone()
     });
 

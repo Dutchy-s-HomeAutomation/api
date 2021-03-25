@@ -1,5 +1,5 @@
 [package]
-name = "smarthome"
+name = "connectedhome"
 version = "0.1.0"
 authors = ["Tobias de Bruijn"]
 edition = "2018"
