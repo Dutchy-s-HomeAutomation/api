@@ -50,8 +50,8 @@ RefreshCookie: <YOUR REFRESH TOKEN>
 ```
 
 ## Getting the User's TCC Locations
-Path: `https://international.mytotalconnectcomfort.com/api/locationsapi/getlocations`
-Method: `GET`
+Path: `https://international.mytotalconnectcomfort.com/api/locationsapi/getlocations`  
+Method: `GET`  
 
 Query parameters: None
 
@@ -149,8 +149,8 @@ Response:
 ```
 
 ## Set a Zone's temperature
-Path: `https://international.mytotalconnectcomfort.com/api/ZonesApi/SetZoneTemperature`
-Method: `POST`
+Path: `https://international.mytotalconnectcomfort.com/api/ZonesApi/SetZoneTemperature`  
+Method: `POST`  
 
 Query parameters: None
 
