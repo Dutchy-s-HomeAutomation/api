@@ -8,7 +8,7 @@ Method: `POST`
 Query parameters: None
 
 Body:
-```json
+```jsonc
 {
     "EmailAddress": "LOGIN_EMAIL_HERE",         //The Email address of the user to log in as
     "Password": "LOGIN_PASSWORD_HERE",          //The password of the user to log in as
@@ -22,7 +22,7 @@ Body:
 ```
 
 Returns:
-```json
+```jsonc
 {
     "Content": {
         "UserId": "USER_ID_HER",                //ID of the logged in user
@@ -63,7 +63,7 @@ SessionCookie: <YOUR SESSION ID>
 ```
 
 Response:
-```json
+```jsonc
 {
     "Content": {
         "Locations": [
@@ -155,7 +155,7 @@ Method: `POST`
 Query parameters: None
 
 Body:
-```json
+```jsonc
 {
     "zoneId": "3967755",                //The ID of the Zone you want  to change
     "heatTemperature": "19.0",          //The target temperature 
@@ -174,7 +174,7 @@ SessionCookie: <YOUR SESSION ID>
 ```
 
 Response:
-```json
+```jsonc
 {
     "Errors": null,                         //Contains Errors if something went wrong. Format unkown
     "RedirectUrl": null,                    //Unkown
