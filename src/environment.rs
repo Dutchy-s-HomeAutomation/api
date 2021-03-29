@@ -20,8 +20,10 @@ pub struct Environment {
     /// This should NOT end with a trailing slash
     pub host:                       String,
 
-    /// Google Client ID provided by Google
-    pub google_client_id:           String,
+    /// Google things
+    //pub google_client_id:           String,
+    //pub google_client_secret:       String,
+    pub assistant_project_id:       String
 }
 
 impl Environment {
@@ -60,9 +62,18 @@ impl Environment {
             environmental_variable_not_set("HOST");
         }
 
+        /*
         let google_client_id = env::var("GOOGLE_CLIENT_ID");
         if google_client_id.is_err() {
             environmental_variable_not_set("GOOGLE_CLIENT_ID");
+        }
+
+        let google_client
+        */
+
+        let assistant_project_id = env::var("ASSISTANT_PROJECT_ID");
+        if assistant_project_id.is_err() {
+            environmental_variable_not_set("ASSISTANT_PROJECT_ID");
         }
 
         Environment {
@@ -74,7 +85,9 @@ impl Environment {
 
             host:                       host.unwrap(),
 
-            google_client_id:           google_client_id.unwrap()
+
+            assistant_project_id:       assistant_project_id.unwrap()
+            //google_client_id:           google_client_id.unwrap()
         }
     }
 }

@@ -2,7 +2,7 @@ use crate::appdata::AppData;
 use crate::environment::Environment;
 use crate::endpoints::auth::{LoginResponse, LoginForm};
 
-use actix_web::{web, post, HttpResponse, HttpRequest};
+use actix_web::{web, post, HttpResponse};
 use mysql::prelude::Queryable;
 use mysql::{Row, Params, params};
 use sha2::{Sha512Trunc256, Digest};
@@ -33,7 +33,7 @@ No body should be provided
 | session_id     | Optional String | If the login succeeded, this will hold the session_id                       |
 */
 #[post("/auth/login")]
-pub async fn post_login(data: web::Data<AppData>, req: HttpRequest, form: web::Form<LoginForm>) -> HttpResponse {
+pub async fn post_login(data: web::Data<AppData>, form: web::Form<LoginForm>) -> HttpResponse {
     //Decode the Email address from Base64 to a vector of bytes and check if it succeeded
     //This could fail due to the client providing an invalid Base64 String
     let email_decoded_result = base64::decode(form.email.clone().as_bytes());
