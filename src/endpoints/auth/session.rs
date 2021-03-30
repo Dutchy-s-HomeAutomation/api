@@ -1,5 +1,5 @@
 use crate::appdata::AppData;
-use crate::logic::user::User;
+use crate::common::user::User;
 
 use actix_web::{web, post, HttpResponse};
 use serde::{Serialize, Deserialize};
@@ -17,7 +17,7 @@ struct Session {
 
 #[post("/auth/session")]
 pub async fn post_session(data: web::Data<AppData>, form: web::Form<SessionForm>) -> HttpResponse {
-    let user = crate::logic::user::get_user(form.session_id.clone().as_str(), data.get_ref());
+    let user = crate::common::user::get_user(form.session_id.clone().as_str(), data.get_ref());
     if user.is_err() {
         eprintln!("Unable to verify session_id: {:?}", user.err());
         return HttpResponse::InternalServerError().finish();

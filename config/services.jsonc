@@ -1,0 +1,25 @@
+/*
+Define possible services to be used
+
+You will still have to implement it in the backend code, though
+
+R: Required
+O: Optional
+
+[]:
+    object:
+        R name: The name of the service as seen in the frontend
+        R identifier: The Identifier as it is known in the ServiceType enum (crate::types::service::ServiceType)
+        R icon: The path to the icon to be shown in the frontend
+        R requires_login: If the service requires a login
+        O login_method: The login method as it is known in crate::types::service::LoginMethod
+*/
+[
+    {
+        "name": "Honeywell EvoHome",
+        "identifier": "HONEYWELL",
+        "icon": "/static/img/services/honeywell-logo.png",
+        "requires_login": false,
+        "login_method": "PASSWORD"
+    }
+]

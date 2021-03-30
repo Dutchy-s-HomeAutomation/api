@@ -1,5 +1,6 @@
 use crate::database::Database;
 use tera::Tera;
+use crate::config::ServicesConfig;
 
 #[derive(Clone)]
 pub struct AppData {
@@ -10,7 +11,9 @@ pub struct AppData {
     OAuth Client credentials
     0: GOOGLE
     */
-    pub oauth_credentials:  Vec<OAuthCredentials>
+    pub oauth_credentials:  Vec<OAuthCredentials>,
+
+    pub services_configs:    Vec<ServicesConfig>
 }
 
 #[derive(Clone)]

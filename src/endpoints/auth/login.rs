@@ -94,8 +94,6 @@ pub async fn post_login(data: web::Data<AppData>, form: web::Form<LoginForm>) ->
     let password_from_db = row.get::<String, &str>("password");
     let salt_from_db = row.get::<String, &str>("salt");
 
-    println!("{}", salt_from_db.clone().unwrap().clone());
-
     //Check if the password or the salt from the database are None
     //If this is the case, something went horribly wrong
     if password_from_db.is_none() || salt_from_db.is_none() {

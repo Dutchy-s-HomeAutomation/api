@@ -1,6 +1,7 @@
 use serde::Serialize;
 
 #[derive(Serialize)]
+#[allow(dead_code)]
 pub struct FulfillmentResponse<T> {
     #[serde(rename(serialize = "requestId"))]
     request_id:         String,
@@ -8,6 +9,7 @@ pub struct FulfillmentResponse<T> {
 }
 
 #[derive(Serialize)]
+#[allow(dead_code)]
 pub enum SyncDeviceStatus {
     SUCCESS,
     OFFLINE,
@@ -16,11 +18,13 @@ pub enum SyncDeviceStatus {
 }
 
 #[derive(Serialize)]
+#[allow(dead_code)]
 pub enum ExecuteDeviceStatus {
 
 }
 
 #[derive(Serialize)]
+#[allow(dead_code)]
 pub struct SyncFulfillmentPayload {
     #[serde(rename(serialize = "agentUserId"))]
     agent_user_id:      String,
@@ -28,12 +32,13 @@ pub struct SyncFulfillmentPayload {
 }
 
 #[derive(Serialize)]
+#[allow(dead_code)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncDevice {
     id:                 String,
 
     #[serde(rename(serialize = "type"))]
-    deviceType:         DeviceType,
+    device_type:         DeviceType,
     traits:             Vec<DeviceTrait>,
     name:               DeviceName,
     will_report_state:  bool,
@@ -41,6 +46,7 @@ pub struct SyncDevice {
 }
 
 #[derive(Serialize)]
+#[allow(dead_code)]
 pub struct DeviceName {
     #[serde(rename(serialize = "defaultNames"))]
     default_names:      Option<Vec<String>>,
@@ -49,6 +55,7 @@ pub struct DeviceName {
 }
 
 #[derive(Serialize)]
+#[allow(dead_code)]
 #[serde(rename_all = "camelCase")]
 pub struct DeviceInfo {
     manufacturer:       String,
@@ -58,11 +65,13 @@ pub struct DeviceInfo {
 }
 
 #[derive(Serialize)]
+#[allow(dead_code)]
 pub enum DeviceTrait {
 
 }
 
 #[derive(Serialize)]
+#[allow(dead_code)]
 pub enum DeviceType {
 
 }

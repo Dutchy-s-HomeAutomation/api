@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 #[serde(rename_all = "PascalCase")]
 pub struct LoginResponse {
     pub content:        Option<Content>,
@@ -8,13 +9,17 @@ pub struct LoginResponse {
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 #[serde(rename_all = "PascalCase")]
 pub struct Content {
+
+    #[serde(rename(deserialize = "UserName"))]
     pub username:       String,
     pub display_name:   String
 }
 
 #[derive(Serialize)]
+#[allow(dead_code)]
 #[serde(rename_all = "PascalCase")]
 pub struct LoginRequest {
     pub email_address:              String,
