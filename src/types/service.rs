@@ -25,9 +25,20 @@ impl fmt::Display for LoginMethod {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum ServiceType {
     HONEYWELL
+}
+
+impl std::str::FromStr for ServiceType {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<ServiceType, Self::Err> {
+        match input {
+            "HONEYWELL" => Ok(ServiceType::HONEYWELL),
+            _           => Err(())
+        }
+    }
 }
 
 impl fmt::Display for ServiceType {

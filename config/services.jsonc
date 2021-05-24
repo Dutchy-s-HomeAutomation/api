@@ -19,7 +19,7 @@ O: Optional
         "name": "Honeywell EvoHome",
         "identifier": "HONEYWELL",
         "icon": "/static/img/services/honeywell-logo.png",
-        "requires_login": false,
+        "requires_login": true,
         "login_method": "PASSWORD"
     }
 ]

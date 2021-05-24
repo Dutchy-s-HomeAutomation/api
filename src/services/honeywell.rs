@@ -1,5 +1,4 @@
 use crate::common::service::{Credentials, get_password_credentials};
-use crate::types::service::ServiceType;
 use crate::types::honeywell::LoginResponse;
 use crate::database::Database;
 
@@ -45,7 +44,7 @@ pub fn do_test_login(username: String, password: String) -> Result<Option<()>, (
 }
 
 pub fn do_login(db: Database, user_id: String) -> Result<Option<HoneywellUser>, ()> {
-    let credentials = get_password_credentials(db, user_id.clone(), ServiceType::HONEYWELL);
+    let credentials = get_password_credentials(db, user_id.clone());
 
     if credentials.is_err() {
         eprintln!("An error occurred: {:?}", credentials.err());

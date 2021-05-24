@@ -52,6 +52,7 @@ async fn main() -> std::io::Result<()>{
 
             //Service endpoints
             .service(endpoints::services::add::post_add)
+            .service(endpoints::services::get::post_get)
     })
     .bind("0.0.0.0:8080")?
     .run()

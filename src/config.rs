@@ -1,12 +1,12 @@
 use std::fs;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use crate::appdata::OAuthCredentials;
 use mysql::{Row, Params, params};
 use mysql::prelude::Queryable;
 use rand::Rng;
 use crate::database::Database;
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct ServicesConfig {
     pub name:           String,
     pub identifier:     crate::types::service::ServiceType,

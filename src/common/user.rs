@@ -26,8 +26,8 @@ pub fn get_user(session_id: &str, appdata: &AppData) -> Result<Option<User>, Err
         let err = conn_wrapped.err().unwrap();
         eprintln!("An error occurred while creating a connection to the Database: {:?}", err.to_string());
         return Err(err);
-    }
 
+    }
     let mut conn = conn_wrapped.unwrap();
     let sql_fetch_result = conn.exec::<Row, &str, Params>("SELECT user_id FROM users WHERE session_id = :session_id", params! {
         "session_id" => session_id.clone()
